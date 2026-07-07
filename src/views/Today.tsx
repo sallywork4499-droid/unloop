@@ -100,6 +100,29 @@ export default function Today() {
         </div>
       )}
 
+      {data.settings.weeklyPrinciple && data.settings.weeklyPrinciple.week >= addDays(-6) && (
+        <div className="notice calm">📌 Nguyên tắc tuần này: “{data.settings.weeklyPrinciple.text}”</div>
+      )}
+
+      {inbox.length > 0 && (
+        <>
+          <div className="section-title">
+            <span>📥 Chưa làm rõ</span>
+            <span className="count">{inbox.length}</span>
+          </div>
+          {inbox.map((l) => (
+            <LoopCard key={l.id} loop={l}>
+              <button className="btn primary" onClick={() => setClarifying(l)}>
+                Làm rõ (5s)
+              </button>
+              <button className="btn ghost" onClick={() => dispatch({ type: 'deleteLoop', id: l.id })}>
+                Xoá
+              </button>
+            </LoopCard>
+          ))}
+        </>
+      )}
+
       <div className="stats">
         <div className="stat clickable" onClick={() => setStatList('active')}>
           <div className="num">{active.length}</div>

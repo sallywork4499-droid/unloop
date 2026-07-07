@@ -3,47 +3,53 @@ import { useStore } from '../store'
 import GoalModal from '../components/GoalModal'
 import GoalDetailModal, { GOAL_GRADIENTS } from '../components/GoalDetailModal'
 import LoopListModal from '../components/LoopListModal'
-import type { Goal, LifeArea } from '../types'
-import { CLOSED_STATES, GOAL_LIMIT, LIFE_AREA_META, isControlled } from '../types'
+import type { Goal, LifeArea, LoopState } from '../types'
+import { CLOSED_STATES, GOAL_LIMIT, LIFE_AREA_META } from '../types'
+import type { QuoteTheme } from '../lib/quotes'
+import { QUOTES, QUOTE_THEME_META } from '../lib/quotes'
 
-const OPEN_STATES = ['inbox', 'active', 'waiting', 'parked']
+const OPEN_STATES: LoopState[] = ['inbox', 'active', 'waiting', 'parked']
 
 /**
- * Tổng quan: các mối bận tâm đang dồn vào khía cạnh nào của cuộc sống?
- * Nhìn thấy bức tranh toàn cảnh → biết nên dồn sức giải quyết ở đâu.
+ * Tổng quan: mục tiêu (hero) → băng thông não (biểu đồ vòng) → phân bố khía cạnh
+ * → bài học & kho trích dẫn.
  */
 export default function Dashboard() {
   const { data, dispatch, activeGoals } = useStore()
   const [goalModal, setGoalModal] = useState<{ goal?: Goal } | null>(null)
   const [goalDetail, setGoalDetail] = useState<string | null>(null)
-  const [statList, setStatList] = useState<'open' | 'controlled' | 'closed' | null>(null)
+  const [statList, setStatList] = useState<LoopState | 'closed' | null>(null)
+  const [showLessons, setShowLessons] = useState(false)
+  const [showQuotes, setShowQuotes] = useState(false)
+  const [theme, setTheme] = useState<QuoteTheme | 'all'>('all')
+
   const open = data.loops.filter((l) => OPEN_STATES.includes(l.state))
-  const aligned = open.filter((l) => l.goalId && activeGoals.some((g) => g.id === l.goalId)).length
   const closed = data.loops.filter((l) => !OPEN_STATES.includes(l.state))
-
-  const groups = (Object.keys(LIFE_AREA_META) as LifeArea[])
-    .map((area) => {
-      const items = open.filter((l) => l.lifeArea === area)
-      return {
-        area,
-        count: items.length,
-        load: items.reduce((s, l) => s + (l.emotionalLoad ?? 0), 0),
-      }
-    })
-    .filter((g) => g.count > 0)
-    .sort((a, b) => b.count - a.count)
-
-  const unassigned = open.filter((l) => !l.lifeArea).length
-  const max = Math.max(1, ...groups.map((g) => g.count), unassigned)
-  const top = groups[0]
-  const heavy = [...groups].sort((a, b) => b.load - a.load)[0]
-  const controlledList = open.filter(isControlled)
-  const controlled = controlledList.length
-  const stale = open.filter((l) => Date.now() - l.stateChangedAt > 14 * 24 * 3600 * 1000).length
   const closedMonthList = closed.filter(
     (l) => l.closedAt && l.closedAt > Date.now() - 30 * 24 * 3600 * 1000,
   )
-  const closedMonth = closedMonthList.length
+
+  // --- Donut: băng thông não ---
+  const segsAll: { key: LoopState; label: string; color: string }[] = [
+    { key: 'active', label: '🔥 Đang xử lý', color: 'var(--teal)' },
+    { key: 'waiting', label: '⏳ Đang chờ', color: 'var(--blue)' },
+    { key: 'parked', label: '🅿️ Tạm gác', color: '#e2a33c' },
+    { key: 'inbox', label: '📥 Chưa làm rõ', color: 'var(--ink-faint)' },
+  ]
+  const segs = segsAll
+    .map((s) => ({ ...s, count: open.filter((l) => l.state === s.key).length }))
+    .filter((s) => s.count > 0)
+  const C = 2 * Math.PI * 45
+  let acc = 0
+
+  // --- Phân bố khía cạnh ---
+  const groups = (Object.keys(LIFE_AREA_META) as LifeArea[])
+    .map((area) => ({ area, count: open.filter((l) => l.lifeArea === area).length }))
+    .filter((g) => g.count > 0)
+    .sort((a, b) => b.count - a.count)
+  const unassigned = open.filter((l) => !l.lifeArea).length
+  const max = Math.max(1, ...groups.map((g) => g.count), unassigned)
+  const top = groups[0]
 
   const goalsSection = (
     <>
@@ -108,23 +114,8 @@ export default function Dashboard() {
 
   const detailIdx = activeGoals.findIndex((g) => g.id === goalDetail)
   const detailGoal = detailIdx >= 0 ? activeGoals[detailIdx] : undefined
-
-  if (open.length === 0 && closed.length === 0) {
-    return (
-      <>
-        {goalsSection}
-        <div className="empty" style={{ marginTop: 16 }}>
-          <span className="big-emoji">📊</span>
-          Chưa có dữ liệu vấn đề. Hãy ghi lại vài mối bận tâm — bức tranh tổng quan sẽ hiện ra ở
-          đây.
-        </div>
-        {goalModal && <GoalModal goal={goalModal.goal} onClose={() => setGoalModal(null)} />}
-        {detailGoal && (
-          <GoalDetailModal goal={detailGoal} index={detailIdx} onClose={() => setGoalDetail(null)} />
-        )}
-      </>
-    )
-  }
+  const listLoops =
+    statList === 'closed' ? closedMonthList : open.filter((l) => l.state === statList)
 
   return (
     <>
@@ -133,18 +124,48 @@ export default function Dashboard() {
       <div className="section-title">
         <span>🧠 Tình trạng băng thông não</span>
       </div>
-      <div className="stats">
-        <div className="stat clickable" onClick={() => setStatList('open')}>
-          <div className="num">{open.length}</div>
-          <div className="lbl">Loop đang mở</div>
-        </div>
-        <div className="stat clickable" onClick={() => setStatList('controlled')}>
-          <div className="num">{controlled}</div>
-          <div className="lbl">Đã kiểm soát</div>
-        </div>
-        <div className="stat clickable" onClick={() => setStatList('closed')}>
-          <div className="num">{closedMonth}</div>
-          <div className="lbl">Đóng trong 30 ngày</div>
+      <div className="card donut-card">
+        <svg viewBox="0 0 120 120" className="donut">
+          <circle cx="60" cy="60" r="45" fill="none" stroke="var(--gray-soft)" strokeWidth="14" />
+          {segs.map((s) => {
+            const dash = (s.count / open.length) * C
+            const el = (
+              <circle
+                key={s.key}
+                cx="60"
+                cy="60"
+                r="45"
+                fill="none"
+                stroke={s.color}
+                strokeWidth="14"
+                strokeDasharray={`${dash} ${C - dash}`}
+                strokeDashoffset={-acc}
+                transform="rotate(-90 60 60)"
+              />
+            )
+            acc += dash
+            return el
+          })}
+          <text x="60" y="58" className="dn">
+            {open.length}
+          </text>
+          <text x="60" y="74" className="ds">
+            loop đang mở
+          </text>
+        </svg>
+        <div className="dlegend">
+          {segs.map((s) => (
+            <button key={s.key} className="dleg" onClick={() => setStatList(s.key)}>
+              <span className="dot2" style={{ background: s.color }} />
+              {s.label}
+              <b>{s.count}</b>
+            </button>
+          ))}
+          {segs.length === 0 && <div className="meta2">Não đang trống chỗ — tuyệt! 🍃</div>}
+          <button className="dleg" onClick={() => setStatList('closed')}>
+            <span className="dot2" style={{ background: 'var(--green)' }} />✅ Đóng 30 ngày
+            <b>{closedMonthList.length}</b>
+          </button>
         </div>
       </div>
 
@@ -155,9 +176,8 @@ export default function Dashboard() {
             {LIFE_AREA_META[top.area].label} ({top.count}/{open.length})
           </h3>
           <p>
-            {heavy && heavy.area !== top.area && heavy.load > 0
-              ? `Nhưng khía cạnh "nặng đầu" nhất về cảm xúc lại là ${LIFE_AREA_META[heavy.area].label} — đáng để ưu tiên xử lý hoặc buông trước.`
-              : 'Thử dồn review tuần này vào khía cạnh đó: đóng bớt, gác bớt, hoặc chấp nhận — não sẽ nhẹ đi rõ rệt.'}
+            Thử dồn review tuần này vào khía cạnh đó: đóng bớt, gác bớt, hoặc chấp nhận — não sẽ
+            nhẹ đi rõ rệt.
           </p>
         </div>
       )}
@@ -181,7 +201,6 @@ export default function Dashboard() {
                   <div className="fill" style={{ width: `${(g.count / max) * 100}%` }} />
                 </div>
                 <span className="cnt">{g.count}</span>
-                <span className="ld">{g.load > 0 ? '🪨'.repeat(Math.min(3, Math.ceil(g.load / g.count))) : ''}</span>
               </div>
             ))}
             {unassigned > 0 && (
@@ -191,39 +210,93 @@ export default function Dashboard() {
                   <div className="fill dim" style={{ width: `${(unassigned / max) * 100}%` }} />
                 </div>
                 <span className="cnt">{unassigned}</span>
-                <span className="ld" />
               </div>
             )}
           </>
         )}
       </div>
 
-      {unassigned > 0 && (
-        <div className="notice">
-          🏷 Có {unassigned} loop chưa gắn khía cạnh — gắn thêm khi "Làm rõ" để bức tranh chính xác
-          hơn.
-        </div>
+      <div className="section-title">
+        <span>📖 Bài học của bạn</span>
+        <button className="btn ghost" onClick={() => setShowLessons(!showLessons)}>
+          {showLessons ? 'Ẩn' : `Xem (${data.lessons.length})`}
+        </button>
+      </div>
+      {showLessons &&
+        (data.lessons.length === 0 ? (
+          <div className="empty">
+            <span className="big-emoji">🌱</span>
+            Khi đóng một loop, bạn có thể rút một bài học 30 giây.
+            <br />
+            Chúng sẽ tự quay lại nhắc bạn đúng lúc — và gom về đây.
+          </div>
+        ) : (
+          data.lessons.map((les) => (
+            <div key={les.id} className="card lesson-card">
+              {les.situation && (
+                <div className="part">
+                  <b>Tình huống</b>
+                  <br />
+                  {les.situation}
+                </div>
+              )}
+              {les.insight && (
+                <div className="part">
+                  <b>Nhận ra</b>
+                  <br />
+                  {les.insight}
+                </div>
+              )}
+              {les.guideline && (
+                <div className="part">
+                  <b>Lần sau</b>
+                  <br />
+                  {les.guideline}
+                </div>
+              )}
+              <div className="src">
+                từ loop: “{les.loopTitle}” ·{' '}
+                <button
+                  className="btn ghost"
+                  style={{ padding: 0, fontSize: 12 }}
+                  onClick={() => dispatch({ type: 'deleteLesson', id: les.id })}
+                >
+                  xoá
+                </button>
+              </div>
+            </div>
+          ))
+        ))}
+
+      <div className="section-title">
+        <span>📚 Kho trích dẫn — Vị thần Thái độ</span>
+        <button className="btn ghost" onClick={() => setShowQuotes(!showQuotes)}>
+          {showQuotes ? 'Ẩn' : `Xem (${QUOTES.length})`}
+        </button>
+      </div>
+      {showQuotes && (
+        <>
+          <div className="chips" style={{ marginBottom: 10 }}>
+            <button className={`chip sm${theme === 'all' ? ' on' : ''}`} onClick={() => setTheme('all')}>
+              Tất cả
+            </button>
+            {(Object.keys(QUOTE_THEME_META) as QuoteTheme[]).map((t) => (
+              <button key={t} className={`chip sm${theme === t ? ' on' : ''}`} onClick={() => setTheme(t)}>
+                {QUOTE_THEME_META[t].icon} {QUOTE_THEME_META[t].label}
+              </button>
+            ))}
+          </div>
+          {(theme === 'all' ? QUOTES : QUOTES.filter((q) => q.theme === theme)).map((q, i) => (
+            <div key={i} className="card">
+              <div style={{ fontSize: 13.5, fontStyle: 'italic', lineHeight: 1.6 }}>“{q.text}”</div>
+              <div className="meta2">
+                {QUOTE_THEME_META[q.theme].icon} {QUOTE_THEME_META[q.theme].label}
+              </div>
+            </div>
+          ))}
+        </>
       )}
-      {stale > 0 && (
-        <div className="notice">
-          ⏰ {stale} loop đã đứng yên hơn 2 tuần. Trong weekly review tới, hãy quyết định: làm, gác
-          có hẹn, hay buông?
-        </div>
-      )}
-      {open.length > 0 && controlled === open.length && (
-        <div className="notice calm">
-          🔒 Tất cả {open.length} loop đang mở đều đã được kiểm soát — có trạng thái rõ và lịch xem
-          lại. Não bạn được phép nghỉ.
-        </div>
-      )}
-      {activeGoals.length > 0 && open.length > 0 && (
-        <div className={aligned === 0 ? 'notice' : 'notice calm'}>
-          🎯 {aligned}/{open.length} mối bận tâm đang mở phục vụ trực tiếp mục tiêu của bạn.
-          {aligned === 0
-            ? ' Đáng suy nghĩ: bạn đang bận vì điều quan trọng, hay vì việc vặt?'
-            : ''}
-        </div>
-      )}
+
       {goalModal && <GoalModal goal={goalModal.goal} onClose={() => setGoalModal(null)} />}
       {detailGoal && (
         <GoalDetailModal goal={detailGoal} index={detailIdx} onClose={() => setGoalDetail(null)} />
@@ -231,13 +304,11 @@ export default function Dashboard() {
       {statList && (
         <LoopListModal
           title={
-            statList === 'open'
-              ? '🔄 Loop đang mở'
-              : statList === 'controlled'
-                ? '🔒 Đã kiểm soát'
-                : '✅ Đóng trong 30 ngày'
+            statList === 'closed'
+              ? '✅ Đóng trong 30 ngày'
+              : segsAll.find((s) => s.key === statList)?.label ?? ''
           }
-          loops={statList === 'open' ? open : statList === 'controlled' ? controlledList : closedMonthList}
+          loops={listLoops}
           showState
           onClose={() => setStatList(null)}
         />

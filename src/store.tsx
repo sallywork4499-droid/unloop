@@ -35,6 +35,7 @@ function load(): AppData {
 
 type Action =
   | { type: 'capture'; titles: string[] }
+  | { type: 'addLoop'; loop: Loop }
   | { type: 'updateLoop'; id: string; patch: Partial<Loop> }
   | { type: 'setLoopState'; id: string; state: LoopState; patch?: Partial<Loop> }
   | { type: 'closeLoop'; id: string; state: 'resolved' | 'accepted' | 'notdoing'; closeNote?: string; lesson?: Omit<Lesson, 'id' | 'loopId' | 'loopTitle' | 'createdAt'> }
@@ -63,6 +64,8 @@ function reducer(data: AppData, action: Action): AppData {
         }))
       return { ...data, loops: [...loops, ...data.loops] }
     }
+    case 'addLoop':
+      return { ...data, loops: [action.loop, ...data.loops] }
     case 'updateLoop':
       return {
         ...data,

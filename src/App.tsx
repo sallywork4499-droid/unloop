@@ -4,24 +4,18 @@ import CaptureBar from './components/CaptureBar'
 import Onboarding from './components/Onboarding'
 import Splash from './components/Splash'
 import AuthScreen from './components/AuthScreen'
-import { IconBook, IconChart, IconCompass, IconInbox, IconLoops, IconSun } from './components/icons'
+import { IconChart, IconLoops, IconSun } from './components/icons'
 import Today from './views/Today'
-import Inbox from './views/Inbox'
 import Loops from './views/Loops'
 import Dashboard from './views/Dashboard'
-import Review from './views/Review'
-import Lessons from './views/Lessons'
 import { todayStr } from './types'
 
-type Tab = 'today' | 'inbox' | 'loops' | 'dash' | 'review' | 'lessons'
+type Tab = 'today' | 'loops' | 'dash'
 
 const TABS: { id: Tab; Icon: () => JSX.Element; label: string }[] = [
   { id: 'today', Icon: IconSun, label: 'Hôm nay' },
-  { id: 'inbox', Icon: IconInbox, label: 'Inbox' },
   { id: 'loops', Icon: IconLoops, label: 'Vòng lặp' },
   { id: 'dash', Icon: IconChart, label: 'Tổng quan' },
-  { id: 'review', Icon: IconCompass, label: 'Review' },
-  { id: 'lessons', Icon: IconBook, label: 'Bài học' },
 ]
 
 export default function App() {
@@ -69,18 +63,15 @@ export default function App() {
       <CaptureBar />
 
       {tab === 'today' && <Today />}
-      {tab === 'inbox' && <Inbox />}
       {tab === 'loops' && <Loops />}
       {tab === 'dash' && <Dashboard />}
-      {tab === 'review' && <Review />}
-      {tab === 'lessons' && <Lessons />}
 
       <nav className="nav">
         <div className="nav-inner">
           {TABS.map((t) => (
             <button key={t.id} className={tab === t.id ? 'on' : ''} onClick={() => setTab(t.id)}>
-              {t.id === 'inbox' && inbox.length > 0 && <span className="dot">{inbox.length}</span>}
-              {t.id === 'review' && (reviewDue || dueToday.length > 0) && <span className="dot">!</span>}
+              {t.id === 'today' && inbox.length > 0 && <span className="dot">{inbox.length}</span>}
+              {t.id === 'loops' && (reviewDue || dueToday.length > 0) && <span className="dot">!</span>}
               <span className="ico">
                 <t.Icon />
               </span>

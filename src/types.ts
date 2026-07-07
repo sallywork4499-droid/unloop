@@ -54,6 +54,10 @@ export interface Loop {
   lifeArea?: LifeArea
   /** Gắn với mục tiêu nào (nếu có) */
   goalId?: string
+  /** Mục tiêu "Khác" tự điền (không nằm trong 3 mục tiêu chính) */
+  customGoal?: string
+  /** Hạn chót (yyyy-mm-dd) */
+  deadline?: string
   /** Ghi chú tự do ngắn */
   note?: string
   /** Lý do đóng / acceptance statement */
@@ -91,6 +95,8 @@ export interface Settings {
   onboarded: boolean
   /** Đã đi qua màn hình đăng nhập (đăng nhập hoặc chọn dùng offline) */
   authSeen?: boolean
+  /** Nguyên tắc được chọn áp dụng tuần này (từ weekly review) */
+  weeklyPrinciple?: { text: string; week: string }
   lastDailyReview?: string // yyyy-mm-dd
   lastWeeklyReview?: string // yyyy-mm-dd
 }

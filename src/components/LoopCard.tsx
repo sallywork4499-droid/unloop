@@ -31,6 +31,8 @@ export default function LoopCard({ loop, children, showState, noDetail }: Props)
   const parts: string[] = []
   if (showState) parts.push(STATE_META[loop.state].label)
   if (goal) parts.push(`🎯 ${goal.title}`)
+  if (!goal && loop.customGoal) parts.push(`🎯 ${loop.customGoal}`)
+  if (loop.deadline) parts.push(`⏰ ${fmtDate(loop.deadline)}`)
   if (loop.lifeArea)
     parts.push(`${LIFE_AREA_META[loop.lifeArea].icon} ${LIFE_AREA_META[loop.lifeArea].label}`)
   if (loop.waitingFor) parts.push(`chờ: ${loop.waitingFor}`)

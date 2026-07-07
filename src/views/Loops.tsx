@@ -4,6 +4,7 @@ import LoopCard from '../components/LoopCard'
 import ClarifyModal from '../components/ClarifyModal'
 import CloseModal from '../components/CloseModal'
 import AuthScreen from '../components/AuthScreen'
+import ReviewSection from './Review'
 import { supabase, supabaseConfigured } from '../lib/supabase'
 import { useSession } from '../lib/useSession'
 import type { AppData, Loop } from '../types'
@@ -103,6 +104,8 @@ export default function Loops() {
             </LoopCard>
           ))
         ))}
+
+      <ReviewSection />
 
       <div className="section-title">
         <span>👤 Tài khoản</span>
