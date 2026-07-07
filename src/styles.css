@@ -249,6 +249,14 @@ input, textarea, select { font-family: inherit; font-size: 15px; color: var(--in
   line-height: 16px;
   padding: 0 4px;
 }
+.nav .dot.mini {
+  min-width: 9px;
+  width: 9px;
+  height: 9px;
+  padding: 0;
+  top: 8px;
+  right: calc(50% - 13px);
+}
 
 /* ---------- Modal ---------- */
 .overlay {

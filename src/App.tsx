@@ -71,7 +71,8 @@ export default function App() {
           {TABS.map((t) => (
             <button key={t.id} className={tab === t.id ? 'on' : ''} onClick={() => setTab(t.id)}>
               {t.id === 'today' && inbox.length > 0 && <span className="dot">{inbox.length}</span>}
-              {t.id === 'loops' && (reviewDue || dueToday.length > 0) && <span className="dot">!</span>}
+              {t.id === 'loops' && dueToday.length > 0 && <span className="dot">{dueToday.length}</span>}
+              {t.id === 'loops' && dueToday.length === 0 && reviewDue && <span className="dot mini" />}
               <span className="ico">
                 <t.Icon />
               </span>
