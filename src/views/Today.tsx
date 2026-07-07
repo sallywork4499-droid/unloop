@@ -103,15 +103,15 @@ export default function Today() {
       <div className="stats">
         <div className="stat clickable" onClick={() => setStatList('active')}>
           <div className="num">{active.length}</div>
-          <div className="lbl">đang xử lý</div>
+          <div className="lbl">Đang xử lý</div>
         </div>
         <div className="stat clickable" onClick={() => setStatList('held')}>
           <div className="num">{controlled}</div>
-          <div className="lbl">đã kiểm soát</div>
+          <div className="lbl">Đã kiểm soát</div>
         </div>
         <div className="stat clickable" onClick={() => setStatList('closed')}>
           <div className="num">{closedCount}</div>
-          <div className="lbl">đã đóng</div>
+          <div className="lbl">Đã đóng</div>
         </div>
       </div>
 

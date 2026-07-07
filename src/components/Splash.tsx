@@ -6,7 +6,7 @@ export default function Splash({ fading }: { fading: boolean }) {
       <div className="splash-name">
         Un<span>loop</span>
       </div>
-      <div className="splash-tag">tắt vòng lặp, nhẹ cái đầu</div>
+      <div className="splash-tag">Tắt vòng lặp, nhẹ cái đầu</div>
     </div>
   )
 }

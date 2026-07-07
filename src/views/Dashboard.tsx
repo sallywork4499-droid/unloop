@@ -136,15 +136,15 @@ export default function Dashboard() {
       <div className="stats">
         <div className="stat clickable" onClick={() => setStatList('open')}>
           <div className="num">{open.length}</div>
-          <div className="lbl">loop đang mở</div>
+          <div className="lbl">Loop đang mở</div>
         </div>
         <div className="stat clickable" onClick={() => setStatList('controlled')}>
           <div className="num">{controlled}</div>
-          <div className="lbl">đã kiểm soát</div>
+          <div className="lbl">Đã kiểm soát</div>
         </div>
         <div className="stat clickable" onClick={() => setStatList('closed')}>
           <div className="num">{closedMonth}</div>
-          <div className="lbl">đóng trong 30 ngày</div>
+          <div className="lbl">Đóng trong 30 ngày</div>
         </div>
       </div>
 

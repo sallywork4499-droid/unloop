@@ -63,7 +63,7 @@ export default function App() {
         <h1>
           Un<span>loop</span>
         </h1>
-        <span className="sub">tắt vòng lặp, nhẹ cái đầu</span>
+        <span className="sub">Tắt vòng lặp, nhẹ cái đầu</span>
       </header>
 
       <CaptureBar />
